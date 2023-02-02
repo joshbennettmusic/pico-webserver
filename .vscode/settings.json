@@ -1,0 +1,37 @@
+{
+    "cmake.configureOnOpen": false,
+    "cmake.statusbar.advanced": {
+      "debug" : {
+        "visibility": "hidden"
+                },    "launch" : {
+        "visibility": "hidden"
+                 },
+      "build" : {
+        "visibility": "default"
+                 },
+      "buildTarget" : {
+        "visibility": "hidden"
+                 },
+       },
+    "cmake.environment": {
+        "PICO_SDK_PATH":"../../pico-sdk",
+        "PICO_EXTRAS_PATH":"../../pico-extras",
+    
+    },
+    "cmake.configureSettings": {
+        "PICO_BOARD" : "pico"
+      },
+      "cmake.buildBeforeRun": true,
+      "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+      "files.associations": {
+        "cmath": "cpp",
+        "random": "cpp",
+        "*.tcc": "cpp",
+        "deque": "cpp",
+        "string": "cpp",
+        "unordered_map": "cpp",
+        "vector": "cpp"
+
+      },
+      "cortex-debug.variableUseNaturalFormat": true
+}

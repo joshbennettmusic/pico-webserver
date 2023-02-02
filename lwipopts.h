@@ -35,6 +35,12 @@
 /* Prevent having to link sys_arch.c (we don't test the API layers in unit tests) */
 #define NO_SYS                          1
 #define MEM_ALIGNMENT                   4
+
+#define MEM_SIZE                    4000
+#define MEMP_NUM_TCP_SEG            32
+#define MEMP_NUM_ARP_QUEUE          10
+#define PBUF_POOL_SIZE              24
+
 #define LWIP_RAW                        0
 #define LWIP_NETCONN                    0
 #define LWIP_SOCKET                     0
@@ -52,12 +58,16 @@
 
 #define LWIP_HTTPD_CGI                  1
 #ifndef LWIP_HTTPD_SSI
-#define LWIP_HTTPD_SSI                  0
+#define LWIP_HTTPD_SSI                  1
 #define LWIP_HTTPD_SSI_INCLUDE_TAG      0
 #endif
 #define HTTPD_USE_CUSTOM_FSDATA         1
-#define HTTPD_FSDATA_FILE               "../../../../fsdata.c"
+#define HTTPD_FSDATA_FILE               "../../../../../pico-webserver/fsdata.c"
 
 #define LWIP_SINGLE_NETIF               1
+
+#define LWIP_HTTPD_SUPPORT_POST         1
+#define LWIP_HTTPD_CUSTOM_FILES         1
+#define LWIP_HTTPD_FILE_EXTENSION       1
 
 #endif /* __LWIPOPTS_H__ */

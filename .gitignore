@@ -1,2 +1,5 @@
 build
 makefsdata
+lwip
+pico-sdk
+tinyusb
