@@ -130,6 +130,7 @@ class W25Q64
         uint8_t wait_done();
 
         int write_blocking(const uint8_t *src, size_t len);
+        int read_blocking(const uint8_t *src, uint8_t *dst, size_t header_len, size_t len);
         int write_read_blocking(const uint8_t *src, uint8_t *dst, size_t len);
 
 };

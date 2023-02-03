@@ -29,13 +29,11 @@
 #include "tusb_lwip_glue.h"
 #include "pico/unique_id.h"
 #include "lwip/apps/httpd.h"
-#include "lwip/apps/fs.h"
+//#include "lwip/apps/fs.h"
 #include "lwip/def.h"
 #include "lwip/mem.h"
 #include "lwipopts.h"
 #include "hardware/adc.h"
-
-const char text_entry[] = "Hello world";
 
 /* lwip context */
 static struct netif netif_data;
@@ -500,111 +498,75 @@ Led_Off(int led)
     gpio_put(led, 0);
 }
 
-err_t httpd_post_begin(void *connection, const char *uri, const char *http_request,
-                 u16_t http_request_len, int content_len, char *response_uri,
-                 u16_t response_uri_len, u8_t *post_auto_wnd)
-{
-    LWIP_UNUSED_ARG(connection);
-    LWIP_UNUSED_ARG(http_request);
-    LWIP_UNUSED_ARG(http_request_len);
-    LWIP_UNUSED_ARG(content_len);
-    LWIP_UNUSED_ARG(post_auto_wnd);
-    if (!memcmp(uri, "/test.cgi", 10)) {
-      return ERR_OK;
-    }
-    return ERR_VAL;
-}
-
-err_t httpd_post_receive_data(void *connection, struct pbuf *p)
-{
-    LWIP_UNUSED_ARG(connection);
-    uint16_t packet_length = p->len;
-    printf("Packet Received of length %d",packet_length);
-    return ERR_OK;
-    
-}
-
-void httpd_post_finished(void *connection, char *response_uri, u16_t response_uri_len)
-{
-  /* default page is "login failed" */
-  snprintf(response_uri, response_uri_len, "/ssi.shtml");
-
-}
-
 //open custom file
-int fs_open_custom(struct fs_file *file, const char *name) {
-    const char generated_html[] =
-"<html>\n"
-"<head><title>lwIP - A Lightweight TCP/IP Stack</title></head>\n"
-" <body bgcolor=\"white\" text=\"black\">\n"
-"  <table width=\"100%\">\n"
-"   <tr valign=\"top\">\n"
-"    <td width=\"80\">\n"
-"     <a href=\"http://www.sics.se/\"><img src=\"/img/sics.gif\"\n"
-"      border=\"0\" alt=\"SICS logo\" title=\"SICS logo\"></a>\n"
-"    </td>\n"
-"    <td width=\"500\">\n"
-"     <h1>lwIP - A Lightweight TCP/IP Stack</h1>\n"
-"     <h2>Generated page</h2>\n"
-"     <p>This page might be generated in-memory at runtime</p>\n"
-"    </td>\n"
-"    <td>\n"
-"    &nbsp;\n"
-"    </td>\n"
-"   </tr>\n"
-"  </table>\n"
-" </body>\n"
-"</html>";
-    /* this example only provides one file */
-    if (!strcmp(name, "/generated.html")) {
-        /* initialize fs_file correctly */
-        memset(file, 0, sizeof(struct fs_file));
-        file->pextension = mem_malloc(sizeof(generated_html));
-        if (file->pextension != NULL) {
-            /* instead of doing memcpy, you would generate e.g. a JSON here */
-            memcpy(file->pextension, generated_html, sizeof(generated_html));
-            file->data = (const char *)file->pextension;
-            file->len = sizeof(generated_html) - 1; /* don't send the trailing 0 */
-            file->index = file->len;
-            /* allow persisteng connections */
-            file->flags = FS_FILE_FLAGS_HEADER_PERSISTENT;
-            return 1;
-        }
-    }
-    if (!strcmp(name, "/testing.txt")) {
-        memset(file, 0, sizeof(struct fs_file));
-        file->data = text_entry;
-        file->len = sizeof(text_entry) - 1;
-        file->flags = FS_FILE_FLAGS_HEADER_PERSISTENT;
-        return 1;
-    }
 
-    return 0;
-}
+// int fs_open_custom(struct fs_file *file, const char *name) 
+// {
+// //     const char generated_html[] =
+// // "<html>\n"
+// // "<head><title>lwIP - A Lightweight TCP/IP Stack</title></head>\n"
+// // " <body bgcolor=\"white\" text=\"black\">\n"
+// // "  <table width=\"100%\">\n"
+// // "   <tr valign=\"top\">\n"
+// // "    <td width=\"80\">\n"
+// // "     <a href=\"http://www.sics.se/\"><img src=\"/img/sics.gif\"\n"
+// // "      border=\"0\" alt=\"SICS logo\" title=\"SICS logo\"></a>\n"
+// // "    </td>\n"
+// // "    <td width=\"500\">\n"
+// // "     <h1>lwIP - A Lightweight TCP/IP Stack</h1>\n"
+// // "     <h2>Generated page</h2>\n"
+// // "     <p>This page might be generated in-memory at runtime</p>\n"
+// // "    </td>\n"
+// // "    <td>\n"
+// // "    &nbsp;\n"
+// // "    </td>\n"
+// // "   </tr>\n"
+// // "  </table>\n"
+// // " </body>\n"
+// // "</html>";
+// //     /* this example only provides one file */
+// //     if (!strcmp(name, "/generated.html")) {
+// //         /* initialize fs_file correctly */
+// //         memset(file, 0, sizeof(struct fs_file));
+// //         file->pextension = mem_malloc(sizeof(generated_html));
+// //         if (file->pextension != NULL) {
+// //             /* instead of doing memcpy, you would generate e.g. a JSON here */
+// //             memcpy(file->pextension, generated_html, sizeof(generated_html));
+// //             file->data = (const char *)file->pextension;
+// //             file->len = sizeof(generated_html) - 1; /* don't send the trailing 0 */
+// //             file->index = file->len;
+// //             /* allow persisteng connections */
+// //             file->flags = FS_FILE_FLAGS_HEADER_PERSISTENT;
+// //             return 1;
+// //         }
+// //     }
+// //     if (!strcmp(name, "/testing.txt")) {
+// //         memset(file, 0, sizeof(struct fs_file));
+// //         file->data = text_entry;
+// //         file->len = sizeof(text_entry) - 1;
+// //         file->flags = FS_FILE_FLAGS_HEADER_PERSISTENT;
+// //         return 1;
+// //     }
 
-// //read file and fill “buffer” step by step by “count” bytes amount
+//     return 0; 
+// }
+
+// // //read file and fill “buffer” step by step by “count” bytes amount
 // int fs_read_custom(struct fs_file *file, char *buffer, int count) {
 
 //     int read = 0;
-//     if (file->index < file->len)
-//     {
-//     read = 100;
-//     file->is_custom_file = 1;
-//     buffer = “buffer_read_custom”;
-//     }
-//     else
-//     {
-//     //end reached
+
+
+//         //end reached
 //     read = FS_READ_EOF;
-//     }
 //     return read;
 // }
 
-void fs_close_custom(struct fs_file *file) {
+// void fs_close_custom(struct fs_file *file) {
 
-  if (file && file->pextension) {
-    mem_free(file->pextension);
-    file->pextension = NULL;
-  }
+//   if (file && file->pextension) {
+//     mem_free(file->pextension);
+//     file->pextension = NULL;
+//   }
 
-}
+// }

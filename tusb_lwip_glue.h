@@ -16,10 +16,10 @@
 #include "lwip/apps/httpd.h"
 
 // GPIOs for Leds
-#define LED1	18
-#define LED2	19
-#define LED3	20
-#define LED4	21
+#define LED1	12
+#define LED2	13
+#define LED3	14
+#define LED4	15
 
 void init_lwip();
 void wait_for_netif_is_up();

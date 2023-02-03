@@ -68,6 +68,9 @@
 
 #define LWIP_HTTPD_SUPPORT_POST         1
 #define LWIP_HTTPD_CUSTOM_FILES         1
+#define LWIP_HTTPD_DYNAMIC_FILE_READ    1
+#define LWIP_HTTPD_FS_ASYNC_READ        1
+#define LWIP_HTTPD_DYNAMIC_HEADERS      1
 #define LWIP_HTTPD_FILE_EXTENSION       1
 
 #endif /* __LWIPOPTS_H__ */

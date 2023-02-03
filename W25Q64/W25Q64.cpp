@@ -11,6 +11,9 @@ uint32_t W25Q64::initSPI(uint32_t baud) {
 	gpio_set_function(_mosi_pin, GPIO_FUNC_SPI);
 	gpio_set_function(_sck_pin, GPIO_FUNC_SPI);
 	//gpio_set_function(_cs_pin, GPIO_FUNC_SPI);   
+    gpio_init(_cs_pin);
+    gpio_set_dir(_cs_pin, GPIO_OUT);
+    gpio_put(_cs_pin, 1);
  	uint32_t setBaud = spi_init(_spi, baud > W25Q64_MAX_BAUD ? W25Q64_MAX_BAUD : baud);
 	spi_set_format(_spi, 8, SPI_CPOL_1, SPI_CPHA_1, SPI_MSB_FIRST);
     return setBaud;
@@ -93,17 +96,17 @@ uint8_t W25Q64::read(uint32_t addr, uint8_t * data, size_t len) {
     comms_buffer[2] = uint8_t(addr >> 8);
     comms_buffer[3] = uint8_t(addr);
     
-    write_read_blocking(comms_buffer, data, len + header_len);
-    return header_len;
+    read_blocking(comms_buffer, data, header_len, len);
+    return 0;
 }
 
 int W25Q64::write_blocking(const uint8_t *src, size_t len)
 {
     int retval;
     uint32_t interrupt_status = save_and_disable_interrupts();
-    //gpio_put(_cs_pin, 0);
+    gpio_put(_cs_pin, 0);
     retval = spi_write_blocking(_spi, src, len);
-    //gpio_put(_cs_pin, 1);
+    gpio_put(_cs_pin, 1);
     restore_interrupts(interrupt_status);
     return retval;
 }
@@ -112,10 +115,23 @@ int W25Q64::write_read_blocking(const uint8_t *src, uint8_t *dst, size_t len)
 {
     int retval;
     uint32_t interrupt_status = save_and_disable_interrupts();
-    //gpio_put(_cs_pin, 0);
+    gpio_put(_cs_pin, 0);
     retval = spi_write_read_blocking(_spi, src, dst, len);
-    //gpio_put(_cs_pin, 1);
+    gpio_put(_cs_pin, 1);
     restore_interrupts(interrupt_status);
+    return retval;
+}
+
+int W25Q64::read_blocking(const uint8_t *src, uint8_t *dst, size_t header_len, size_t len)
+{
+    int retval;
+    uint32_t interrupt_status = save_and_disable_interrupts();
+    gpio_put(_cs_pin, 0);
+    spi_write_blocking(_spi, src, header_len);
+    restore_interrupts(interrupt_status);
+    spi_read_blocking(_spi, 0xFF, dst, len);
+    gpio_put(_cs_pin, 1);
+
     return retval;
 }
 
@@ -183,21 +199,21 @@ uint8_t FlashMemory::programMemory(uint32_t addr, uint8_t * buffer, size_t len)
 
 void FlashMemory::prepareSpi()
 {
-    //gpio_init(_cs_pin);
-    //gpio_set_dir(_cs_pin, GPIO_OUT);
-    gpio_set_function(_cs_pin, GPIO_FUNC_SPI);
+    // gpio_init(_cs_pin);
+    // gpio_set_dir(_cs_pin, GPIO_OUT);
+    //gpio_set_function(_cs_pin, GPIO_FUNC_SPI);
     // uint32_t currentBaud = getBaud();
     // if (currentBaud != _requested_baud) {
     //     saveBaud();
     //     currentBaud = setBaud(_requested_baud);
     // }
-    setWordLen(8);
+    //setWordLen(8);
     selectDevice();
 }
 
 void FlashMemory::restoreSpi()
 {
-    gpio_set_function(_cs_pin, GPIO_FUNC_SIO);
+    //gpio_set_function(_cs_pin, GPIO_FUNC_SIO);
     // restoreBaud();
     deselectDevice();
 }
