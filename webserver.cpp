@@ -15,6 +15,7 @@
 #include "lwip/def.h"
 #include "lwip/mem.h"
 #include "lwip/tcpip.h"
+#include "filesys.h"
 
 #define ADD_WEBSERVER 1
 
@@ -27,7 +28,7 @@
 #define FLASH_CS  17
 #define FLASH_SCK 18
 #define FLASH_TX  19
-#define FLASH_DATA_BLOCK 16
+// #define FLASH_DATA_BLOCK 16
 #define FLASH_BAUD 5 * 1000 * 1000
 #define FLASH_READ_SIZE W25Q64_PAGE_SIZE*4
 #define MAX_SPI_BUFFER_SIZE 3000
@@ -44,21 +45,24 @@ extern "C" int fs_read_async_custom(struct fs_file *file, char *buffer, int coun
 
 // Flash B
 FlashMemory flashB(FLASH_PORT, FLASH_RX, FLASH_TX, FLASH_CS, FLASH_SCK, SEL_FLASHB_DISP);
-uint8_t flashBuf[W25Q64_SECTOR_SIZE];
-uint8_t spi_buffer[MAX_SPI_BUFFER_SIZE];
-uint16_t flashBufDataLen = 0;
-uint16_t sectorsWritten = 0;
+FlashFile testFile(&flashB);
+FlashFile * thisFile = NULL;
+
+
+//uint8_t spi_buffer[MAX_SPI_BUFFER_SIZE];
+//uint16_t flashBufDataLen = 0;
+//uint16_t sectorsWritten = 0;
 uint32_t fileSize = 0;
 
-struct fs_custom_data {
-  uint8_t * data_buffer;
-  int data_len;
-#if LWIP_HTTPD_FS_ASYNC_READ
-  int delay_read;
-  fs_wait_cb callback_fn;
-  void *callback_arg;
-#endif
-};
+// struct fs_custom_data {
+//   uint8_t * data_buffer;
+//   int data_len;
+// #if LWIP_HTTPD_FS_ASYNC_READ
+//   int delay_read;
+// //   fs_wait_cb callback_fn;
+// //   void *callback_arg;
+// #endif
+// };
 
 
 
@@ -67,12 +71,21 @@ err_t httpd_post_begin(void *connection, const char *uri, const char *http_reque
                  u16_t response_uri_len, u8_t *post_auto_wnd)
 {
     LWIP_UNUSED_ARG(connection);
-    LWIP_UNUSED_ARG(http_request);
+    char * boundaryStart = strstr(http_request, "boundary=") + strlen("boundary=");
+    
     LWIP_UNUSED_ARG(http_request_len);
-    LWIP_UNUSED_ARG(content_len); // add checks for max size here
+    fileSize = content_len; // add checks for max size here
     LWIP_UNUSED_ARG(post_auto_wnd);
     if (!memcmp(uri, "/test.cgi", 10)) {
-      return ERR_OK;
+        //testFile.setSize(content_len);
+        thisFile = &testFile;
+
+        if (thisFile->open(FILE_WRITE) == FILESYS_OK) {
+            thisFile->setWrapper(strtok(boundaryStart, "\r\n")); 
+            //thisFile->setWrapperLen(boundaryLen + 4);
+            return ERR_OK;
+        }
+        else return ERR_INPROGRESS;
     }
     return ERR_VAL;
 }
@@ -84,67 +97,25 @@ err_t httpd_post_receive_data(void *connection, struct pbuf *p)
     uint16_t packet_length = p->len;
     uint8_t * packet_data = (uint8_t *)p->payload;
 
+    // if (thisFile->isFirstPacket()) {
+    //     packet_data += thisFile->getWrapperLen();
+    //     packet_length -= thisFile->getWrapperLen();
+    // }
+
     printf("\nPacket received");
 
-    if (flashBufDataLen + packet_length >= W25Q64_SECTOR_SIZE) {
-        // we've got enough data to fill a sector
-        printf("\nBuffer full... ");
-        uint16_t bufferRoomLeft = W25Q64_SECTOR_SIZE - flashBufDataLen;
-        memcpy(&flashBuf[flashBufDataLen], p->payload, bufferRoomLeft);
-        flashB.programMemory(FLASH_DATA_BLOCK * W25Q64_BLOCK_SIZE + sectorsWritten * W25Q64_SECTOR_SIZE, flashBuf, W25Q64_SECTOR_SIZE);
-        printf("Packets saved to sector  %d\n",sectorsWritten);
-        sectorsWritten++;
-        flashBufDataLen = packet_length - bufferRoomLeft;
-        if (flashBufDataLen) memcpy(flashBuf, &packet_data[bufferRoomLeft], packet_length);
-
-    } else {
-        // add this packet to the flash write buffer
-        memcpy(&flashBuf[flashBufDataLen],p->payload,packet_length);
-        flashBufDataLen += packet_length;
-
-    }
+    if (thisFile->write(packet_data, packet_length) == FILESYS_OK) return ERR_OK;
     
-    return ERR_OK;
+    return ERR_INPROGRESS;
     
 }
 
 void httpd_post_finished(void *connection, char *response_uri, u16_t response_uri_len)
 {
-  /* default page is "login failed" */
-  // save the rest of the buffer
-  if (flashBufDataLen) {
-    flashB.programMemory(FLASH_DATA_BLOCK * W25Q64_BLOCK_SIZE + sectorsWritten * W25Q64_SECTOR_SIZE, flashBuf, flashBufDataLen);
-    printf("Final %d bytes saved to sector  %d\n",flashBufDataLen, sectorsWritten);
-    fileSize = sectorsWritten * W25Q64_SECTOR_SIZE + flashBufDataLen;
-    printf("\nBuffer Out Start:\n");
-    for (int i = 0; i < 256; i++) {
-        printf("%02X",flashBuf[i]); 
-
-        if (i % 16 == 15)
-            printf("\n");
-        else
-            printf(" ");
-
-    }
-    printf("\nFlash Memory Start:\n");
-    uint16_t offset = flashB.readMemory(FLASH_DATA_BLOCK * W25Q64_BLOCK_SIZE, flashBuf, 256);
-    //uint16_t offset = flashB.readMemory(0, flashBuf, 256);
-    for (int i = offset; i < 256 + offset; i++) {
-        if ((flashBuf[i] > 33) && (flashBuf[i] < 127)) {
-            printf("%c ",flashBuf[i]); 
-        } else {
-            printf("%02X",flashBuf[i]); 
-        }
-        
-
-        if (i % 16 == 3)
-            printf("\n");
-        else
-            printf(" ");
-
-    }    
-  } 
-  snprintf(response_uri, response_uri_len, "/ssi.shtml");
+    // save the rest of the buffer
+    thisFile->close();
+    thisFile = NULL;
+    snprintf(response_uri, response_uri_len, "/ssi.shtml");
 
 }
 
@@ -174,7 +145,8 @@ int fs_open_custom(struct fs_file *file, const char *name) {
 "</html>";
 
     const char text_entry[] = "Hello world";
-    
+    thisFile = NULL;
+
     /* this example only provides one file */
     if (!strcmp(name, "/generated.html")) {
         /* initialize fs_file correctly */
@@ -200,22 +172,18 @@ int fs_open_custom(struct fs_file *file, const char *name) {
         return 1;
     }
     if (!strcmp(name, "/image.jpg")) {
-        struct fs_custom_data *data = (struct fs_custom_data *)mem_malloc(sizeof(struct fs_custom_data));
-        LWIP_ASSERT("out of memory?", data != NULL);
+        thisFile = &testFile;
+        //struct fs_custom_data *data = (struct fs_custom_data *)mem_malloc(sizeof(struct fs_custom_data));
+        //LWIP_ASSERT("out of memory?", data != NULL);
         memset(file, 0, sizeof(struct fs_file));
+        thisFile->open(FILE_READ);
         file->len = 0; /* read size delayed */
-        data->delay_read = 3;
-        data->data_buffer = spi_buffer;
-        data->data_len = 1179771;
+        //data->delay_read = 3;
+        //data->data_buffer = testFile.dataBuffer();
+        //data->data_len = testFile.getSize();
         file->flags = FS_FILE_FLAGS_HEADER_PERSISTENT;
-        file->pextension = data;
-        //file->pextension = mem_malloc(FLASH_READ_SIZE + 10);
-        //file->pextension = NULL;
-        //file->data = "";
-        //file->len = 65970;
-        //ile->index = 0;
+        //file->pextension = data;
 
-        //file->is_custom_file = 1;
         return 1;
     }
 
@@ -229,11 +197,13 @@ int fs_read_custom(struct fs_file *file, char *buffer, int count) {
     if (file->index >= file->len) return FS_READ_EOF;
     if (count > MAX_SPI_BUFFER_SIZE) return 0; // for now
     
-    read = (file->len - file->index < count ) ? file->len - file->index  : count;
-    uint8_t offset = flashB.readMemory(FLASH_DATA_BLOCK * W25Q64_BLOCK_SIZE + file->index, spi_buffer, read);
-    for (int i = 0; i < read; i++) {
-        buffer[i] = spi_buffer[i + offset];
-    }       
+    //read = (file->len - file->index < count ) ? file->len - file->index  : count;
+
+    read = thisFile->read((uint8_t *)buffer, count);
+    //uint8_t offset = flashB.readMemory(FLASH_DATA_BLOCK * W25Q64_BLOCK_SIZE + file->index, spi_buffer, read);
+    // for (int i = 0; i < read; i++) {
+    //     buffer[i] = spi_buffer[i + offset];
+    // }       
     file->index += read;
     return read;
 }
@@ -244,12 +214,16 @@ void fs_close_custom(struct fs_file *file) {
 //     mem_free(file->pextension);
 //     file->pextension = NULL;
 //   }
-  if (file && file->pextension) {
-    struct fs_custom_data *data = (struct fs_custom_data *)file->pextension;
-    data->data_buffer = NULL;
-    mem_free(data);
-    file->pextension = NULL;
-  }
+//   if (file && file->pextension) {
+//     //struct fs_custom_data *data = (struct fs_custom_data *)file->pextension;
+//     //data->data_buffer = NULL;
+//     //mem_free(data);
+//     file->pextension = NULL;
+//   }
+    if (thisFile->isOpen()) {
+        thisFile->close();
+        thisFile == NULL;
+    }     
 }
 
 u8_t fs_canread_custom(struct fs_file *file)
@@ -258,107 +232,71 @@ u8_t fs_canread_custom(struct fs_file *file)
      If reading would block, return 0 and implement fs_wait_read_custom() to call the
      supplied callback if reading works. */
 
-    struct fs_custom_data *data;
+    //struct fs_custom_data *data;
     LWIP_ASSERT("file != NULL", file != NULL);
-    data = (struct fs_custom_data *)file->pextension;
-    if (data == NULL) {
+    //data = (struct fs_custom_data *)file->pextension;
+    if (thisFile == NULL) {
         /* file transfer has been completed already */
         LWIP_ASSERT("transfer complete", file->index == file->len);
         return 1;
     }
-    LWIP_ASSERT("data != NULL", data != NULL);
+    LWIP_ASSERT("file != NULL", thisFile != NULL);
     /* The delay arises from SPI transfer */
-    if (data->delay_read == 3) {
-        /* delayed file size mode */
-        data->delay_read = 1;
-        LWIP_ASSERT("", file->len == 0);
-        file->len = data->data_len;
-        data->delay_read = 1;
+    file->len = thisFile->getSize();
+    if (thisFile->isDataReady()) {
+        return 1;
+    } else {
         return 0;
     }
-    if (data->delay_read == 1) {
-        /* tell read function to delay further */
-        return 0;
-    }
-    LWIP_UNUSED_ARG(file);
-    return 1;
+    
+
+    // if (data->delay_read == 3) {
+    //     /* delayed file size mode */
+    //     data->delay_read = 1;
+    //     LWIP_ASSERT("", file->len == 0);
+    //     file->len = testFile.getSize(); 
+    //     data->delay_read = 1;
+    //     return 0;
+    // }
+    // if (data->delay_read == 1) {
+    //     /* tell read function to delay further */
+    //     return 0;
+    // }
+    // LWIP_UNUSED_ARG(file);
+    // return 1;
 }
 
-// static void fs_spi_read_cb(void *arg)
-// {
-//   struct fs_custom_data *data = (struct fs_custom_data *)arg;
-//   fs_wait_cb callback_fn = data->callback_fn;
-//   void *callback_arg = data->callback_arg;
-//   data->callback_fn = NULL;
-//   data->callback_arg = NULL;
-
-//   LWIP_ASSERT("no callback_fn", callback_fn != NULL);
-
-//   callback_fn(callback_arg);
-// }
 
 u8_t fs_wait_read_custom(struct fs_file *file, fs_wait_cb callback_fn, void *callback_arg)
 {
 
     err_t err;
-    struct fs_custom_data *data = (struct fs_custom_data *)file->pextension;
-    LWIP_ASSERT("data not set", data != NULL);
-    //data->callback_fn = callback_fn;
-    //data->callback_arg = callback_arg;
-    //err = tcpip_try_callback(fs_spi_read_cb, data);
-    //LWIP_ASSERT("out of queue elements?", err == ERR_OK);
-    //LWIP_UNUSED_ARG(err);
-
+    //struct fs_custom_data *data = (struct fs_custom_data *)file->pextension;
+    //LWIP_ASSERT("data not set", data != NULL);
     LWIP_UNUSED_ARG(file);
     LWIP_UNUSED_ARG(callback_fn);
     LWIP_UNUSED_ARG(callback_arg);
     /* Return
         - 1 if ready to read (at least one byte)
         - 0 if reading should be delayed (call 'tcpip_callback(callback_fn, callback_arg)' when ready) */
-    return (data->delay_read == 0 ? 1 : 0);
+    return (thisFile->isDataReady()); 
 }
 
 int fs_read_async_custom(struct fs_file *file, char *buffer, int count, fs_wait_cb callback_fn, void *callback_arg)
 {
-    struct fs_custom_data *data = (struct fs_custom_data *)file->pextension;
-    int read = (data->data_len - file->index < count ) ? data->data_len - file->index  : count;
+    //struct fs_custom_data *data = (struct fs_custom_data *)file->pextension;
+    //int read = (data->data_len - file->index < count ) ? data->data_len - file->index  : count;
 
-    LWIP_ASSERT("data not set", data != NULL);
+    //LWIP_ASSERT("data not set", data != NULL);
 
-    if (file->index >= data->data_len) return FS_READ_EOF;
+    if (file->index >= thisFile->getSize()) return FS_READ_EOF;
 
-    /* This delay would normally come e.g. from SPI transfer */
-    // LWIP_ASSERT("invalid state", data->delay_read >= 0 && data->delay_read <= 2);
-    // if (data->delay_read == 2) {
-    //     /* no delay next time */
-    //     data->delay_read = 0;
-    //     return FS_READ_DELAYED;
-    // } else if (data->delay_read == 1) {
-    //     err_t err;
-    //     /* execute requested delay */
-    //     data->delay_read = 2;
-    //     LWIP_ASSERT("duplicate callback request", data->callback_fn == NULL);
-    //     data->callback_fn = callback_fn;
-    //     data->callback_arg = callback_arg;
-    //     //tcpip_callback(fs_example_read_cb, data);
-    //     //LWIP_ASSERT("out of queue elements?", err == ERR_OK);
-    //     //LWIP_UNUSED_ARG(err);
-    //     return FS_READ_DELAYED;
-    // }
-    /* execute this read but delay the next one */
+    int read = thisFile->read((uint8_t *)buffer, count);
 
-    flashB.readMemory(FLASH_DATA_BLOCK * W25Q64_BLOCK_SIZE + file->index, (uint8_t *)buffer, read);
-    data->delay_read = 0;
-    //callback_fn(callback_arg);    
-    // LWIP_UNUSED_ARG(callback_fn);
-    // LWIP_UNUSED_ARG(callback_arg);
+    //flashB.readMemory(FLASH_DATA_BLOCK * W25Q64_BLOCK_SIZE + file->index, (uint8_t *)buffer, read);
+    //data->delay_read = 0;
 
     file->index += read;
-
-    /* Return
-        - FS_READ_EOF if all bytes have been read
-        - FS_READ_DELAYED if reading is delayed (call 'tcpip_callback(callback_fn, callback_arg)' when done) */
-
     return read;
 }
 
@@ -426,6 +364,13 @@ int main()
 
     flashB.init();
     flashB.initSPI(FLASH_BAUD);
+
+    // initialise for the first time
+    if (!testFile.init()) {
+        testFile.setAddress(FLASH_DATA_BLOCK * W25Q64_BLOCK_SIZE);
+        testFile.setSize(34311);
+        testFile.update();
+    }
     // Initialize tinyusb, lwip, dhcpd and httpd
 #if ADD_WEBSERVER
     init_lwip();
@@ -446,7 +391,7 @@ int main()
     gpio_init(DSP_RST_N);
     gpio_set_dir(DSP_RST_N, GPIO_OUT);
     gpio_put(DSP_RST_N, 1);
-    
+
     testFlashB();
 
     printf("\nInitialised, waiting for webserver data...");

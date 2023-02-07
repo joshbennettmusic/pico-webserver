@@ -34,6 +34,7 @@ pico_enable_stdio_usb(${PROJECT_NAME} 0)
 pico_enable_stdio_uart(${PROJECT_NAME} 1)
 
 add_subdirectory(W25Q64)
+add_subdirectory(include)
 
 add_compile_options(-Wall
         -Wno-format          # int != int32_t as far as the compiler is concerned because gcc has int32_t as long int
@@ -47,7 +48,8 @@ target_link_libraries(${PROJECT_NAME} pico_stdlib
                                       lwipcore  
                                       hardware_adc 
                                       hardware_spi
-                                      W25Q64 )
+                                      W25Q64 
+                                      filesys)
 
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_LIST_DIR} PRIVATE ${LWIP_INCLUDE_DIRS} ${PICO_TINYUSB_PATH}/src ${PICO_TINYUSB_PATH}/lib/networking)
 

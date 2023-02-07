@@ -107,7 +107,7 @@ class W25Q64
 
         uint32_t initSPI(uint32_t baud);
         uint8_t setDriveStrength(w25q64_drive_strength strength);
-        uint8_t read(uint32_t addr, uint8_t * data, size_t len);
+
         uint32_t getBaud() { return spi_get_baudrate(_spi); }  
         uint32_t setBaud(uint32_t baud) { return spi_set_baudrate(_spi, baud); }  
 
@@ -115,7 +115,8 @@ class W25Q64
 
         uint8_t eraseSector(uint32_t addr);
         uint8_t programPage(uint32_t addr, uint8_t * data, uint16_t len);    
-         void setWordLen(uint8_t len) { spi_set_format(_spi, len, SPI_CPOL_1, SPI_CPHA_1, SPI_MSB_FIRST); }       
+        void setWordLen(uint8_t len) { spi_set_format(_spi, len, SPI_CPOL_1, SPI_CPHA_1, SPI_MSB_FIRST); } 
+        uint8_t read(uint32_t addr, uint8_t * data, size_t len);      
     private:
 
         spi_inst_t * _spi;
