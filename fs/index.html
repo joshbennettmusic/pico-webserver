@@ -19,17 +19,17 @@
         <nav>
             <div class="navbar">
                 <i class='bx bx-menu'></i>
-                <div class="logo"><a href="index.php"><img src="images/AudioSprocketsLogoWhite.png"></a></div>
-                <div class="smalllogo"><a href="index.php"><img src="images/AudioSprocketsLogoWhite.png"></a></div>
+                <div class="logo"><a href="index.html"><img src="images/AudioSprocketsLogoWhite.png"></a></div>
+                <div class="smalllogo"><a href="index.html"><img src="images/AudioSprocketsLogoWhite.png"></a></div>
                 <div class="nav-links">
                     <div class="sidebar-logo">
                         <span class="logo-name"><img src="images/AudioSprocketsLogoWhite.png"></span>
                         <i class="bx bx-x"></i>
                     </div>
                     <ul class="links">
-                        <li><a href="/ssi.shtml">Voltage</a></li>                            
-                        <li><a href="/cgi.html">LEDs</a></li>
-                        <li><a href="/ssi_cgi.shtml">Feedback</a></li>
+                        <li><a href="/ssi.shtml">Menu1</a></li>                            
+                        <li><a href="/cgi.html">Menu2</a></li>
+                        <li><a href="/ssi_cgi.shtml">Menu3</a></li>
 
                     </ul>
             </div>
@@ -40,39 +40,93 @@
                 <div class="col-1">
                     <div class="info-box">
                         <h1>ToneDexter</h1>
-
-                        <a href="/ssi.shtml">&nbsp;ssi-page: Counter and Voltage</a><br>
+                        <h4>Webserver Test</h4>
+                        <!-- <a href="/ssi.shtml">&nbsp;ssi-page: Counter and Voltage</a><br>
                         <a href="/cgi.html">&nbsp;cgi-page: Ledcontrol</span></a><br>
-                        <a href="/ssi_cgi.shtml">&nbsp;cgi-page: Ledcontrol with feedback</span></a><br>
-                        <a href="/data/blink.bin" download>Download esisting binary file</a><br>
+                        <a href="/ssi_cgi.shtml">&nbsp;cgi-page: Ledcontrol with feedback</span></a><br> -->
                         <a href="testing.txt" download>Download text file</a><br>
-                        <a href="/generated.html">Go to generated Page</a><br>
-                        <a href="/image.jpg" download>Grab Big Generated File!</a><br>
+                        <a href="/generated.html">Link to generated page</a><br>
+                        <a href="/data/blink.bin" download>Download from Flash A (pre-loaded file)</a><br>
+                        <a href="/flashB.bin" download>Download from Flash B</a><br>
 
                     </div>
+
                     <div class="info-box">
-                        <form class="form-horizontal" action="/test.cgi" method="post" name="upload_data" enctype="multipart/form-data">
+                        <form class="upload-form" action="/dsp_update.cgi" method="post" name="upload_data" enctype="multipart/form-data">
                             <fieldset>
                                 <!-- Form Name -->
-                                <legend>Upload Testing</legend>
+                                <legend>DSP Update</legend>
                                 <!-- File Button -->
+
                                 <div class="form-group">
-                                    <label class="col-md-4 control-label" for="filebutton">Select File</label>
+                                    <label class="col-md-4 control-label" for="filebutton">Select BIN File</label>
                                     <div class="col-md-4">
-                                        <input type="file" name="file" id="file" class="input-large">
+                                        <input type="file" name="file" id="files" class="input-large">
                                     </div>
                                 </div>
+                                <!-- <label for="file"><i class="fa-solid fa-folder-open fa-2x"></i>Select Bin file ...</label>
+                                <input id="file" type="file" name="file"> -->
                                 <!-- Button -->
                                 <div class="form-group">
-                                    <label class="col-md-4 control-label" for="singlebutton">Import data</label>
-                                    <div class="col-md-4">
+                                    <!-- <label class="col-md-4 control-label" for="singlebutton">Upload</label> -->
+                                    <div class="progress"></div>
+                                    <!-- <progress id="progressBar" value="0" max="100" style="width:300px;"></progress> -->
+                                    <!-- <div class="form-button">
+                                        <input type="submit" value="Upload">
+                                    </div> -->
+                                    <button type="submit">Upload</button>
+
+                                    <div class="result"></div>
+
+                                    <!-- <div class="col-md-4">
                                         <button type="submit" id="submit" name="Import" class="btn btn-primary button-loading" data-loading-text="Loading...">Import</button>
-                                    </div>
+                                        
+                                    </div> -->
+                                    <!-- <h3 id="status"></h3>
+                                    <p id="loaded_n_total"></p> -->
                                 </div>
                             </fieldset>
                         </form>
             
                     </div>
+                    <div class="info-box">
+                        <form class="upload-form2" action="/test.cgi" method="post" name="upload_data" enctype="multipart/form-data">
+                            <fieldset>
+                                <!-- Form Name -->
+                                <legend>File Upload Test</legend>
+                                <!-- File Button -->
+
+                                <div class="form-group">
+                                    <label class="col-md-4 control-label" for="filebutton">Select File</label>
+                                    <div class="col-md-4">
+                                        <input type="file" name="file" id="files" class="input-large">
+                                    </div>
+                                </div>
+                                <!-- <label for="file"><i class="fa-solid fa-folder-open fa-2x"></i>Select Bin file ...</label>
+                                <input id="file" type="file" name="file"> -->
+                                <!-- Button -->
+                                <div class="form-group">
+                                    <!-- <label class="col-md-4 control-label" for="singlebutton">Upload</label> -->
+                                    <!-- <div class="progress"></div> -->
+                                    <!-- <progress id="progressBar" value="0" max="100" style="width:300px;"></progress> -->
+                                    <div class="form-button">
+                                        <input type="submit" value="Upload">
+                                    </div>
+                                    <!-- <button type="submit">Upload</button>
+
+                                    <div class="result"></div> -->
+
+                                    <!-- <div class="col-md-4">
+                                        <button type="submit" id="submit" name="Import" class="btn btn-primary button-loading" data-loading-text="Loading...">Import</button>
+                                        
+                                    </div> -->
+                                    <!-- <h3 id="status"></h3>
+                                    <p id="loaded_n_total"></p> -->
+                                </div>
+                            </fieldset>
+                        </form>
+            
+                    </div>                    
                 </div>
                 <div class="col-2">
                     <img src="https://h4o15b.a2cdn1.secureserver.net/wp-content/uploads/2022/12/ToneDexter_II_VAbove_1000.jpg" class="big-logo">
@@ -83,25 +137,48 @@
             <div class="footer">
                 <p>Copyright 2023 © Audio Sprockets</p>
             </div>
-        </div>        
-        
+        </div>
+<script>
+
+// Declare global variables for easy access 
+const uploadForm = document.querySelector('.upload-form');
+const filesInput = uploadForm.querySelector('#files');
+// Attach submit event handler to form
+uploadForm.onsubmit = event => {
+    event.preventDefault();
+    // Make sure files are selected
+    if (!filesInput.files.length) {
+        uploadForm.querySelector('.result').innerHTML = 'Please select a file!';
+    } else {
+        // Create the form object
+        let uploadFormDate = new FormData(uploadForm);
+        // Initiate the AJAX request
+        let request = new XMLHttpRequest();
+        // Ensure the request method is POST
+        request.open('POST', uploadForm.action);
+        // Attach the progress event handler to the AJAX request
+        request.upload.addEventListener('progress', event => {
+            // Add the current progress to the button
+            uploadForm.querySelector('button').innerHTML = 'Uploading... ' + '(' + ((event.loaded/event.total)*100).toFixed(2) + '%)';
+            // Update the progress bar
+            uploadForm.querySelector('.progress').style.background = 'linear-gradient(to right, #25b350, #25b350 ' + Math.round((event.loaded/event.total)*100) + '%, #e6e8ec ' + Math.round((event.loaded/event.total)*100) + '%)';
+            // Disable the submit button
+            uploadForm.querySelector('button').disabled = true;
+        });
+        // The following code will execute when the request is complete
+        request.onreadystatechange = () => {
+            if (request.readyState == 4 && request.status == 200) {
+                // Output the response message
+                uploadForm.querySelector('button').innerHTML = 'Done';
+                uploadForm.querySelector('.result').innerHTML = request.responseText;
+            }
+        };
+        // Execute request
+        request.send(uploadFormDate);
+    }
+};
+</script>
+            
 
    </body>
-</html>
-
-
-
-
-
-</head>
-
-<body>
-
-
-
-                
-    <script src="js/dropdown.js"></script>
-    <script src="js/delete.js"></script>                
-
-</body>
 </html>

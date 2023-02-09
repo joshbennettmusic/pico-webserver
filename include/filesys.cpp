@@ -6,20 +6,23 @@
 #define ADDR_OFFSET 0
 #define SIZE_OFFSET 1
 #define CHECK_OFFSET 2
+#define FS_INDEX_OFFSET 3
 
 uint8_t flashBuf[W25Q64_SECTOR_SIZE];
 char boundaryText[70]; //maximum allowed size;
 
-uint8_t FlashFile::init()
+uint8_t FlashFile::init(uint8_t fsIndex)
 {
-    int fileBuf[3];
+    _filesysIndex = fsIndex;
+    int fileBuf[4];
     int bufSize = sizeof(fileBuf);
-    _flash->readMemory(FLASH_DIRECTORY_BLOCK * W25Q64_BLOCK_SIZE, (uint8_t *)fileBuf, bufSize );
+    _flash->readMemory(FLASH_DIRECTORY_BLOCK * W25Q64_BLOCK_SIZE + _filesysIndex * sizeof(fileBuf), (uint8_t *)fileBuf, bufSize );
 
     if (fileBuf[CHECK_OFFSET] != FILESYS_CHK) return FILESYS_ERR;
 
     _address = (int)fileBuf[ADDR_OFFSET];
     _size = (int)fileBuf[SIZE_OFFSET];
+    _filesysIndex = (int)fileBuf[FS_INDEX_OFFSET];
     return FILESYS_OK;
 }
 
@@ -51,7 +54,7 @@ uint8_t FlashFile::open(uint8_t mode)
 {
     if (_status != STATUS_IDLE) return FILESYS_ERR;
     if (mode == FILE_WRITE) {
-        _address = getBaseAddr();
+        //_address = getBaseAddr();
         _size = 0;
         _index = 0;
         _status = FILE_WRITE;
@@ -67,7 +70,7 @@ uint8_t FlashFile::open(uint8_t mode)
 
 uint8_t FlashFile::update()
 {
-    int fileBuf[3];
+    int fileBuf[4];
     int bufSize = sizeof(fileBuf);
 
     fileBuf[CHECK_OFFSET] = FILESYS_CHK;
@@ -135,7 +138,7 @@ uint8_t FlashFile::close()
 
         // now have the full file in Flash, including wrappers
         stripWrapper();
-        update();
+        //update();
     }
     _status = STATUS_IDLE;
     return FILESYS_OK;
@@ -154,4 +157,65 @@ bool FlashFile::isDataReady()
 void FlashFile::setWrapper(const char * wrapper)
 {
     strcpy(boundaryText, wrapper);
+}
+
+uint8_t FileSys::init()
+{
+    FlashFile * checkFile = new FlashFile(_flash);
+    for (int i = 0; i < FILE_COUNT_MAX; i++) {
+        if (checkFile->init(i) == FILESYS_OK) {
+            // file exists on Flash
+            _files[i] = checkFile;
+            _file_count++;
+            checkFile = new FlashFile(_flash);
+        }
+    }
+    return FILESYS_OK;
+}
+
+FlashFile * FileSys::newFile(int addr, int size)
+{
+    if (_file_count >= FILE_COUNT_MAX) return NULL;
+
+    _files[_file_count] = new FlashFile(_flash, _file_count);
+    if (addr == ADDR_NEXT_AVAIL) {
+        // dp some fancy allocation, but probably not needed for TD
+        int nextAddr = W25Q64_SECTOR_SIZE + W25Q64_SECTOR_MASK & (_files[_file_count - 1]->getAddress() + _files[_file_count - 1]->getSize());
+        if (nextAddr < FLASH_DATA_BLOCK * W25Q64_BLOCK_SIZE) nextAddr = FLASH_DATA_BLOCK * W25Q64_BLOCK_SIZE;
+        _files[_file_count]->setAddress(nextAddr);
+    } else {
+        _files[_file_count]->setAddress(addr);
+    }
+    _file_count++;
+    return _files[_file_count-1];
+
+}
+
+void FileSys::deleteFile(FlashFile * thisFile)
+{
+    // bare minimum
+    for (int i = thisFile->getFilesysIndex(); i < _file_count - 1; i++ ) {
+        _files[i] = _files[i + 1];
+        _files[i]->setFilesysIndex(i);
+    }
+    _file_count--;
+    delete thisFile;
+    directoryUpdate();
+
+}
+
+void FileSys::directoryUpdate() {
+    int fileBuf[4];
+    int bufSize = sizeof(fileBuf);
+
+
+    for (uint8_t i = 0; i < _file_count; i++) {
+        fileBuf[CHECK_OFFSET] = FILESYS_CHK;
+        fileBuf[ADDR_OFFSET] = _files[i]->getAddress();
+        fileBuf[SIZE_OFFSET] = _files[i]->getSize();
+        fileBuf[FS_INDEX_OFFSET] = i;
+        memcpy(flashBuf + i * bufSize, fileBuf, bufSize);
+    }
+    _flash->programMemory(FLASH_DIRECTORY_BLOCK * W25Q64_BLOCK_SIZE, flashBuf, bufSize * _file_count);
+    
 }

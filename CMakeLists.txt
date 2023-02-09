@@ -18,7 +18,7 @@ set(LWIP_DIR ${PICO_EXTRAS_PATH}/lib/lwip)
 
 set (LWIP_INCLUDE_DIRS
     "${LWIP_DIR}/src/include"
-    "${CMAKE_CURRENT_SOURCE_DIR}"
+    "${CMAKE_CURRENT_SOURCE_DIR}/webserver"
 )
 include(${LWIP_DIR}/src/Filelists.cmake)
 
@@ -28,13 +28,14 @@ set(TINYUSB_LIBNETWORKING_SOURCES
     ${PICO_TINYUSB_PATH}/lib/networking/rndis_reports.c
 )
 
-add_executable(${PROJECT_NAME} webserver.cpp tusb_lwip_glue.c usb_descriptors.c ${TINYUSB_LIBNETWORKING_SOURCES})
+add_executable(${PROJECT_NAME} web.cpp)
 
 pico_enable_stdio_usb(${PROJECT_NAME} 0)
 pico_enable_stdio_uart(${PROJECT_NAME} 1)
 
 add_subdirectory(W25Q64)
 add_subdirectory(include)
+add_subdirectory(webserver)
 
 add_compile_options(-Wall
         -Wno-format          # int != int32_t as far as the compiler is concerned because gcc has int32_t as long int
@@ -49,9 +50,10 @@ target_link_libraries(${PROJECT_NAME} pico_stdlib
                                       hardware_adc 
                                       hardware_spi
                                       W25Q64 
-                                      filesys)
+                                      filesys
+                                      webserver)
 
-target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_LIST_DIR} PRIVATE ${LWIP_INCLUDE_DIRS} ${PICO_TINYUSB_PATH}/src ${PICO_TINYUSB_PATH}/lib/networking)
+target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_LIST_DIR} ${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_LIST_DIR} PRIVATE ${LWIP_INCLUDE_DIRS} ${PICO_TINYUSB_PATH}/src ${PICO_TINYUSB_PATH}/lib/networking)
 
 
 pico_add_extra_outputs(${PROJECT_NAME})
