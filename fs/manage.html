@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width,initial-scale=1">        
+        <title>ToneDexter</title> 
+        <link href='https://unpkg.com/boxicons@2.1.2/css/boxicons.min.css' rel='stylesheet'>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>    
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/bootbox.js/5.5.3/bootbox.min.js"></script>
+        <link href="https://use.fontawesome.com/releases/v5.3.1/css/all.css" rel="stylesheet" integrity="sha384-mzrmE5qonljUremFsqc01SB46JvROS7bZs3IO2EmfFsd15uHvIt+Y8vEf7N7fWAU" crossorigin="anonymous">
+        <link href="https://fonts.googleapis.com/css2?family=Roboto" rel="stylesheet"> 
+        <link href="css/bootstrap.min.css" rel="stylesheet" />
+        <script src="js/bootstrap.bundle.min.js"></script>
+        <script src="js/dselect.js"></script>    
+        <link rel="stylesheet" href="css/josh_styles.css">
+        <script src="js/searchtool.js"></script>   
+    </head>
+    <body> 
+        <nav>
+            <div class="navbar">
+                <i class='bx bx-menu'></i>
+                <div class="logo"><a href="index.html"><img src="images/AudioSprocketsLogoWhite.png"></a></div>
+                <div class="smalllogo"><a href="index.html"><img src="images/AudioSprocketsLogoWhite.png"></a></div>
+                <div class="nav-links">
+                    <div class="sidebar-logo">
+                        <span class="logo-name"><img src="images/AudioSprocketsLogoWhite.png"></span>
+                        <i class="bx bx-x"></i>
+                    </div>
+                    <!-- <ul class="links">
+                        <li><a href="/ssi.shtml">Menu1</a></li>                            
+                        <li><a href="/cgi.html">Menu2</a></li>
+                        <li><a href="/ssi_cgi.shtml">Menu3</a></li>
+
+                    </ul> -->
+            </div>
+        </nav>        
+
+        <div class="main-container">
+            <div class="row">
+                <div class="col-1">
+                    <div class="info-box">
+                        <h1>WaveMap Management</h1>
+
+                        <div class="wavemapDiv" id="wavemapDiv"></div>
+                    </div>
+                 
+                </div>
+                <div class="col-2">
+                    <img src="https://h4o15b.a2cdn1.secureserver.net/wp-content/uploads/2022/12/ToneDexter_II_VAbove_1000.jpg" class="big-logo">
+                    <div class="color-box"></div>
+                </div>
+            </div>
+ 
+            <div class="footer">
+                <p>Copyright 2023 © Audio Sprockets</p>
+            </div>
+        </div>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.10.2/Sortable.min.js"></script>
+        <script>
+            //let refreshBtn = document.getElementById("refresh-btn");
+            let dragArea = document.querySelector(".wavemapDiv");
+            new Sortable(dragArea, {
+                animation: 200,
+                handle: ".icon",
+            });
+
+            const wrapper = document.getElementById("wavemapDiv");
+
+            window.onload = async () => {
+            try {
+                // fetch all data of todo
+                await fetch('./wavemaps.json')
+                .then(async (allData) => {
+                    //console.log(allData);
+                    return await allData.json();
+                })
+                .then((wavemaps) => {
+                    console.log(wavemaps);
+                    for(let wavemap of wavemaps) {
+                        const wavemapEl = document.createElement("div");
+                        wavemapEl.classList.add("item");
+                        const slotNo = wavemap.slot;
+                        const text = wavemap.title;
+                        
+                        wavemapEl.setAttribute("slotNo", slotNo);
+                        wavemapEl.innerHTML = `<i class="icon bx bx-grid-vertical"></i><div class="txt">${text}</div><div class="options"><i class="trash bx bx-edit-alt" onClick="startEditTitle(this, ${slotNo})"></i><i class="trash bx bx-trash" onClick="deleteToDo(this.parentNode, ${slotNo})"></i></div>`;
+                        // changePostion() after dragend
+                        wavemapEl.addEventListener("dragend", () => {
+                            changePosition(wavemapEl, slotNo);
+                        });
+                        wrapper.appendChild(wavemapEl);
+                    }
+                });
+            } catch (e) {
+                console.log(e);
+            }
+            };
+
+            // 
+            function startEditTitle(txtTag, id) {
+
+                const input = document.createElement("input");
+                
+                input.classList.add("inputbox");
+                let wmEl = txtTag.parentNode.parentNode;
+                //console.log(wmEl.children);
+                //console.log(wmEl.children[1].innerHTML);
+                // console.log(wmEl.children[2].innerHTML);
+                // console.log(wmEl.children[3].innerHTML);
+                input.value = wmEl.children[1].innerHTML;  // might need to change this one
+                
+                const okButton = document.createElement("button");
+                okButton.innerText = "OK";
+                okButton.setAttribute(
+                    "onClick",
+                    `finishEditTitle(this, this.previousSibling, ${id})`
+                );
+                //inputContainer.innerHTML = input;
+                wmEl.children[2].replaceWith(okButton);
+                wmEl.children[1].replaceWith(input);
+            }
+
+            
+            async function finishEditTitle(button, input, id) {
+                const newValue = input.value;
+                const newWaveMapDiv = input.parentNode;
+                console.log(newWaveMapDiv);
+                newWaveMapDiv.innerHTML = `<i class="icon bx bx-grid-vertical"></i><div class="txt">${newValue}</div>
+                                      <div class="options"><i class="trash bx bx-edit-alt" onClick="startEditTitle(this, ${id})">
+                                      </i><i class="trash bx bx-trash" onClick="deleteToDo(this.parentNode, ${id})"></i></div>`;
+                button.remove();
+                input.remove();
+
+                // const updateUrl = "http://localhost:3000/edit-todos/" + id;
+                // await fetch(updateUrl, {
+                //     method: "POST",
+                //     headers: {
+                //     "Content-type": "application/json",
+                //     },
+                //     body: JSON.stringify({ newValue }),
+                // });
+            }
+            // fetch('./wavemaps.json')
+            //     .then(res => res.json())
+            //     .then(function(wavemaps) {
+
+            //         let tableEl = document.querySelector("#waveMapList");
+            //         let wmIndex = 1; 
+            //         let out = "";
+
+            //         for(let wavemap of wavemaps) {
+            //             out += `
+            //             <tr draggable="true" ondragstart="start()" ondragover="dragover()">
+            //                 <td>${wmIndex}</td><td>${wavemap.title}</td><td><i onClick="editPost(this)" class="bx bx-edit-alt"></i></td>    
+            //             `;
+            //             wmIndex++;
+            //         }
+            //         tableEl.innerHTML = out;
+            //     });
+
+            var row;
+            function start(){
+                row = event.target;
+            }
+            function dragover(){
+                var e = event;
+                e.preventDefault();
+            
+                let children= Array.from(e.target.parentNode.parentNode.children);
+                if(children.indexOf(e.target.parentNode)>children.indexOf(row))
+                e.target.parentNode.after(row);
+                else
+                e.target.parentNode.before(row);
+
+            }
+
+            function refreshTD() {
+                console.log("Got to the refresh code");
+
+
+            }
+
+            async function changePosition(currEl, currElId) {
+                let prevElId = 0;
+                let nextElId = 0;
+                //console.log(refreshBtn);
+                //refreshBtn.classList.add("btnon");
+                //refreshBtn.onclick = refreshTD;
+            
+                try {
+                    // Get index_number if there is a task on top of the dragged and dropped task
+                    // if not, undefined
+                    if (currEl.previousSibling !== null) {
+                        prevElId = currEl.previousSibling.getAttribute("slotNo");
+                        console.log(prevElId);
+                    // await fetch("http://localhost:3000/read-todos/" + prevElId)
+                    //     .then(async (data) => {
+                    //     return await data.json();
+                    //     })
+                    //     .then((json) => {
+                    //     prevElIndexNumber = json.results[0].index_number;
+                    //     });
+                    }
+
+                    // Get index_number if there is a task under the drag & drop task
+                    // if not, undefined
+                    if (currEl.nextSibling != null) {
+                        nextElId = currEl.nextSibling.getAttribute("slotNo");
+                        console.log(nextElId);                        // await fetch("http://localhost:3000/read-todos/" + nextElId)
+                        //     .then(async (data) => {
+                        //     return await data.json();
+                        //     })
+                        //     .then((json) => {
+                        //     nextElIndexNumber = json.results[0].index_number;
+                        //     });
+                    }
+
+                    // HTTP Request
+                    let reqType = "reorder";
+                    let returnedBody = JSON.stringify({ reqType, currElId, prevElId, nextElId });
+                    console.log(returnedBody);
+                    $.ajax({
+                        url: "./jsonpost.cgi",
+                        type: "POST",
+                        data: returnedBody,
+                        dataType: "json",
+                        success: function(response) {
+                            if (response == 1) {
+                                bootbox.alert('WaveMap Moved');
+
+                            } else {
+                                bootbox.alert('Error');
+                            }
+                        }
+                    });
+                } catch (e) {
+                    console.log(e);
+                }
+            }
+
+        </script>
+
+   </body>
+</html>

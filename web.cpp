@@ -363,7 +363,6 @@ int main()
     
     webserver.init(&serviceWebRequests);
     // Initialize tinyusb, lwip, dhcpd and httpd
-
     webserver.connect();
 
     //http_set_cgi_handlers(cgi_handlers, LWIP_ARRAYSIZE(cgi_handlers));

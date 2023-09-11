@@ -23,13 +23,68 @@ a {
 a:hover {
     color: var(--grad-light);
 }
- 
+
+.wavemapDiv {
+    min-width: 400px;
+    background: #FFF;
+    border-radius: 3px;
+    padding: 25px 30px;
+    box-shadow: 0 2px 5px rgba(0,0,0,.3)
+}
+
+.wavemapDiv .item {
+    display: block;
+    background: var(--grad-gold);
+    margin: 5px 0;
+    padding: 10px 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.wavemapDiv .item:hover {
+    background: var(--grad-light);
+}
+
+.wavemapDiv .item .txt {
+    color: #FFF;
+    font-weight: 400;
+    font-size: 1rem;
+}
+
+.wavemapDiv .item .inputbox {
+    color: var(--grad-gold);
+    text-align: center;
+    font-weight: 400;
+    font-size: 1rem;
+}
+
+.wavemapDiv .item .icon {
+    color: #FFF;
+    font-weight: 400;
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+.item button {
+    width: 4rem;
+}
+
+.trash{
+    color: #FFF;
+    cursor: pointer;
+    margin: auto 20px auto auto;
+}
+
 
 .action-box {
-    height: 70px;
+    height: 140px;
     max-width: 350px;
     padding: 10px;
     margin: auto;
+}
+.short {
+    height: 60px;
 }
 
 /* Buttons */
@@ -37,7 +92,7 @@ a.action-button {
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 45px;
+    height: 100%;
     width: 100%;
     outline: none;
     color: #fff;
@@ -50,12 +105,42 @@ a.action-button {
     background: var(--grad-gold);
   }
 
+  .update-button {
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    width: 100%;
+    background: grey;
+    color: lightgrey;
+
+    border-radius: 5px;
+    font-size: 18px;
+    font-weight: 500;
+    letter-spacing: 1px;
+  }
+  
+  .update-button.btnon {
+    color: #fff;
+    background: var(--grad-gold);
+  }
+
   a.action-button:hover {
     background: var(--grad-light);
       
   }
 
+  .wavemap-list {
+    border-collapse: collapse;
+    /* -webkit-user-select: none;
+    -ms-user-select: none;
+    user-select: none; */
+  }
 
+    .wavemap-list td,tr,th {
+        border: 1px solid white;
+        border-collapse: collapse;
+        cursor:grab;
+    }
 /* button .button-small {
     width: 140px;
     border: 0;
@@ -426,7 +511,7 @@ nav .navbar .links li:hover .admin-sub-menu{
 }
 
 /* Tables */
-.sorted-list {
+.wavemap-list {
     /* position: relative; */
     border: 1px solid #ccc;
     width: 95%;
@@ -441,14 +526,14 @@ nav .navbar .links li:hover .admin-sub-menu{
 }
 
 
-.sorted-list caption {
+.wavemap-list caption {
     font-size: 1.5em;
     margin: .5em 0 .75em;
 
 }
 
 
-.sorted-list th {
+.wavemap-list th {
     /* position: sticky;
     top: 0; */
     color: #FFF;
@@ -459,10 +544,10 @@ nav .navbar .links li:hover .admin-sub-menu{
     text-align: center;
 }
 
-.sorted-list th:hover {
+.wavemap-list th:hover {
     background-color: var(--grad-light);
 }
-.sorted-list th a {
+.wavemap-list th a {
     display: block;
     text-decoration:none;
     color: #ffffff;
@@ -470,12 +555,12 @@ nav .navbar .links li:hover .admin-sub-menu{
     font-size: 13px;
 }
 
-.sorted-list th a i {
+.wavemap-list th a i {
     margin-left: 5px;
     color: rgba(255,255,255,0.4);
 }
 
-.sorted-list td {
+.wavemap-list td {
     /* max-width: 0; */
     padding: 10px;
     color: #636363;
@@ -486,18 +571,18 @@ nav .navbar .links li:hover .admin-sub-menu{
     white-space: nowrap;
 }
 
-.sorted-list tr {
+.wavemap-list tr {
     /* display: contents; */
     background-color: #f8f8f8;
     /* text-align: center; */
 }
 
-.sorted-list tr .highlight {
+.wavemap-list tr .highlight {
     background-color: #f9fafb;
 }
 
-.sorted-list td a,
-.sorted-list td a:hover{
+.wavemap-list td a,
+.wavemap-list td a:hover{
     color: #000;
 }
 
@@ -638,6 +723,11 @@ form .checkmark {
   .upload-form label:hover i {
     color: #cfd1d4;
   } */
+  .upload-form .form-group {
+    /* background-color: #aca7a5;
+    padding: 10px; */
+    margin-top: 20px;
+  }
 
   .upload-form .progress {
     height: 20px;
@@ -648,9 +738,12 @@ form .checkmark {
   .upload-form button {
     appearance: none;
     background-color: #be5a41;
-    border-radius: 4px;
+    border: 2px solid #ee8368;
+    height: 100%;
+    width: 100%;
+    border-radius: 5px;
     font-weight: 500;
-    font-size: 14px;
+    font-size: 18px;
     border: 0;
     padding: 10px 12px;
     margin-top: 10px;
@@ -955,15 +1048,15 @@ form .form-error {
         width: calc(100%/2 - 20px);
     }
 
-    .sorted-list {
+    .wavemap-list {
         border: 0;
     }
 
-    .sorted-list caption {
+    .wavemap-list caption {
         font-size: 1.3em;
     }
 
-    .sorted-list thead {
+    .wavemap-list thead {
         border: none;
         clip: rect(0 0 0 0);
         height: 1px;
@@ -975,28 +1068,28 @@ form .form-error {
 
     }
 
-    .sorted-list tr {
+    .wavemap-list tr {
         border-bottom: 3px solid #ddd;
         display: block;
         margin-bottom: .625em;
     }
 
 
-    .sorted-list td {
+    .wavemap-list td {
         border-bottom: 1px solid #ddd;
         display: block;
         font-size: .8em;
         text-align: right;        
     }
 
-    .sorted-list td::before {
+    .wavemap-list td::before {
         content: attr(data-label);
         float: left;
         font-weight: bold;
         text-transform: uppercase;
     }
 
-    .sorted-list td:last-child {
+    .wavemap-list td:last-child {
         border-bottom: 0;
     }
 
