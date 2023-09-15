@@ -41,7 +41,7 @@
                     <div class="info-box">
                         <h1>WaveMap Management</h1>
 
-                        <div class="wavemapDiv" id="wavemapDiv"></div>
+                        <div class="wavemapDiv" id="wavemapDiv">Loading...</div>
                     </div>
                  
                 </div>
@@ -76,14 +76,31 @@
                 })
                 .then((wavemaps) => {
                     console.log(wavemaps);
+                    wrapper.innerHTML="";
                     for(let wavemap of wavemaps) {
                         const wavemapEl = document.createElement("div");
                         wavemapEl.classList.add("item");
                         const slotNo = wavemap.slot;
                         const text = wavemap.title;
+                        const empty = wavemap.empty;
+                        let lineitem = '';
                         
                         wavemapEl.setAttribute("slotNo", slotNo);
-                        wavemapEl.innerHTML = `<i class="icon bx bx-grid-vertical"></i><div class="txt">${text}</div><div class="options"><i class="trash bx bx-edit-alt" onClick="startEditTitle(this, ${slotNo})"></i><i class="trash bx bx-trash" onClick="deleteToDo(this.parentNode, ${slotNo})"></i></div>`;
+                        lineitem += `<div class="leftbuttons"><i title="drag to move" class="icon iconBtn bx bx-grid-vertical"></i>`;
+                        if (!empty) lineitem += `<a title="Copy" class="iconBtn" href="copywavemap.cgi?id=${slotNo}"><i class="iconBtn bx bx-copy" ></i></a>`;
+                        lineitem += `</div><div class="txt">${text}</div>
+                                    <div class="options">
+                                        <i title="Rename" class="iconBtn bx bx-edit-alt" onClick="startEditTitle(this, ${slotNo})"></i>
+                                        <a title="Edit" href="wavemapdata.cgi?id=${slotNo}"><i class="iconBtn bx bx-slider-alt" ></i></a>`;
+                        if (empty) {
+                            wavemapEl.classList.add("empty");
+                            lineitem += `<i title="Load WaveMap" class="iconBtn bx bx-download" onClick="startLoadWaveMap(this.parentNode, ${slotNo})"></i>`;
+                        } else {
+                            lineitem += `<i title="Save WaveMap to File" class="iconBtn bx bx-upload" onClick="downloadFile('saveWaveMap.cgi?id=${slotNo}','${text}.wm')"></i>
+                                         <i title="Delete WaveMap" class="iconBtn bx bx-trash" onClick="deleteWaveMap(this.parentNode, ${slotNo})"></i>`;
+                        }
+                        lineitem += '</div>';
+                        wavemapEl.innerHTML = lineitem;
                         // changePostion() after dragend
                         wavemapEl.addEventListener("dragend", () => {
                             changePosition(wavemapEl, slotNo);
@@ -96,6 +113,30 @@
             }
             };
 
+            function deleteWaveMap(element, id) {
+                bootbox.confirm({message:"Do you really want to delete this WaveMap?", 
+                buttons: { confirm: {label: 'Yes', className: 'btn-success'}, cancel:{label:'No', className: 'btn-danger'}},
+                callback: function(result) {
+                    if (result) {
+                            location.href= "deleteWaveMap.cgi?id="+id;
+                    }
+                }});
+            }
+            
+            function downloadFile(url, fileName) {
+                fetch(url, { method: 'get', mode: 'no-cors', referrerPolicy: 'no-referrer' })
+                    .then(res => res.blob())
+                    .then(res => {
+                    const aElement = document.createElement('a');
+                    aElement.setAttribute('download', fileName);
+                    const href = URL.createObjectURL(res);
+                    aElement.href = href;
+                    aElement.setAttribute('target', '_blank');
+                    aElement.click();
+                    URL.revokeObjectURL(href);
+                });
+            };
+            
             // 
             function startEditTitle(txtTag, id) {
 
@@ -113,24 +154,28 @@
                 okButton.innerText = "OK";
                 okButton.setAttribute(
                     "onClick",
-                    `finishEditTitle(this, this.previousSibling, ${id})`
+                    `finishEditTitle(this, this.parentNode.children[1], ${id})`
                 );
                 //inputContainer.innerHTML = input;
                 wmEl.children[2].replaceWith(okButton);
                 wmEl.children[1].replaceWith(input);
+                console.log(okButton.parentNode.children[1]);
             }
 
             
             async function finishEditTitle(button, input, id) {
                 const newValue = input.value;
+                console.log(input);
                 const newWaveMapDiv = input.parentNode;
-                console.log(newWaveMapDiv);
+                //console.log(newWaveMapDiv);
                 newWaveMapDiv.innerHTML = `<i class="icon bx bx-grid-vertical"></i><div class="txt">${newValue}</div>
-                                      <div class="options"><i class="trash bx bx-edit-alt" onClick="startEditTitle(this, ${id})">
-                                      </i><i class="trash bx bx-trash" onClick="deleteToDo(this.parentNode, ${id})"></i></div>`;
-                button.remove();
-                input.remove();
-
+                                            <div class="options">
+                                                 <i class="iconBtn bx bx-edit-alt" onClick="startEditTitle(this, ${id})"></i>
+                                                 <i class="iconBtn bx bx-trash" onClick="deleteToDo(this.parentNode, ${id})"></i>
+                                             </div>`;
+                // button.remove();
+                // input.remove();
+                location.href = 'rename.cgi?id='+ id + '&title=' + newValue; 
                 // const updateUrl = "http://localhost:3000/edit-todos/" + id;
                 // await fetch(updateUrl, {
                 //     method: "POST",
@@ -174,11 +219,92 @@
 
             }
 
-            function refreshTD() {
-                console.log("Got to the refresh code");
+            function startLoadWaveMap(txtTag, id) {
+                const buttonBox = document.createElement("div");
+                buttonBox.classList.add("options");
+                const input = document.createElement("input");
+                input.type = "file";
+                input.setAttribute("id","files");
+                input.classList.add("input-large");
+                let wmEl = txtTag.parentNode;
+                //console.log(wmEl.children);
+                //console.log(wmEl.children[1].innerHTML);
+                // console.log(wmEl.children[2].innerHTML);
+                // console.log(wmEl.children[3].innerHTML);
+                //input.value = wmEl.children[1].innerHTML;  // might need to change this one
 
+                const uploadButton = document.createElement("button");
+                uploadButton.innerText = "Load";
+                //uploadButton.classList.add("moveRight");
+                uploadButton.setAttribute(
+                    "onClick",
+                    `finishLoadWaveMap(this, this.parentNode.parentNode.children[1], ${id})`
+                );
 
+                const cancelButton = document.createElement("button");
+                cancelButton.innerText = "Cancel";
+                cancelButton.setAttribute(
+                    "onClick",
+                    `window.location.href="manage.html"`
+                );
+                console.log(uploadButton);
+                //inputContainer.innerHTML = input;
+                wmEl.children[2].replaceWith(buttonBox);
+                buttonBox.appendChild(uploadButton);
+                buttonBox.appendChild(cancelButton);
+                
+                wmEl.children[1].replaceWith(input);
+                wmEl.children[0].innerHTML = "";
+                //wmEl.appendChild(cancelButton);
+                //console.log(uploadButton.parentNode.children[1]);
             }
+            async function finishLoadWaveMap(button, input, id) {
+                const filesIn = document.querySelector('#files');
+                const progressBar = document.createElement("div");
+                progressBar.classList.add("progress");
+                if (!filesIn.files.length) {
+                    progressBar.innerHTML = 'Please select a file';
+                } else {
+                    button.parentNode.parentNode.children[1].replaceWith(progressBar);
+                    button.parentNode.innerHTML = `<div class="options"></div>`;
+                    let uploadFormData = new FormData();
+                    //uploadFormData.append("id",id);
+                    uploadFormData.append("file",filesIn.files[0]);
+                    let request = new XMLHttpRequest();
+                    request.open('POST', 'loadWaveMap.cgi?id='+id);
+                    request.upload.addEventListener('progress', event => {
+                        // Add the current progress to the button
+                        progressBar.innerHTML = 'Uploading... ' + '(' + ((event.loaded/event.total)*100).toFixed(2) + '%)';
+                        // Update the progress bar
+                        progressBar.style.background = 'linear-gradient(to right, #25b3FF, #25b350 ' + Math.round((event.loaded/event.total)*100) + '%, #e6e8ec ' + Math.round((event.loaded/event.total)*100) + '%)';
+                        // Disable the submit button
+                        //uploadForm.querySelector('button').disabled = true;
+                    });
+                    request.onreadystatechange = () => {
+                        if (request.readyState == 4 && request.status == 200) {
+                            // Output the response message
+                            progressBar.innerHTML = 'Done';
+                            location.href='manage.html';
+                        }
+                    };
+                    request.send(uploadFormData);
+                }
+
+                // location.href = 'rename.cgi?id='+ id + '&title=' + newValue; 
+                // const updateUrl = "http://localhost:3000/edit-todos/" + id;
+                // await fetch(updateUrl, {
+                //     method: "POST",
+                //     headers: {
+                //     "Content-type": "application/json",
+                //     },
+                //     body: JSON.stringify({ newValue }),
+                // });
+            }
+            // function refreshTD() {
+            //     console.log("Got to the refresh code");
+
+
+            // }
 
             async function changePosition(currEl, currElId) {
                 let prevElId = 0;
@@ -191,7 +317,7 @@
                     // Get index_number if there is a task on top of the dragged and dropped task
                     // if not, undefined
                     if (currEl.previousSibling !== null) {
-                        prevElId = currEl.previousSibling.getAttribute("slotNo");
+                        prevElId = Number(currEl.previousSibling.getAttribute("slotNo"));
                         console.log(prevElId);
                     // await fetch("http://localhost:3000/read-todos/" + prevElId)
                     //     .then(async (data) => {
@@ -205,7 +331,7 @@
                     // Get index_number if there is a task under the drag & drop task
                     // if not, undefined
                     if (currEl.nextSibling != null) {
-                        nextElId = currEl.nextSibling.getAttribute("slotNo");
+                        nextElId = Number(currEl.nextSibling.getAttribute("slotNo"));
                         console.log(nextElId);                        // await fetch("http://localhost:3000/read-todos/" + nextElId)
                         //     .then(async (data) => {
                         //     return await data.json();
@@ -216,23 +342,24 @@
                     }
 
                     // HTTP Request
-                    let reqType = "reorder";
-                    let returnedBody = JSON.stringify({ reqType, currElId, prevElId, nextElId });
-                    console.log(returnedBody);
-                    $.ajax({
-                        url: "./jsonpost.cgi",
-                        type: "POST",
-                        data: returnedBody,
-                        dataType: "json",
-                        success: function(response) {
-                            if (response == 1) {
-                                bootbox.alert('WaveMap Moved');
+                    location.href="/reorder.cgi?wm="+currElId+"&prev="+prevElId+"&next="+nextElId;
+                    // let reqType = "reorder";
+                    // let returnedBody = JSON.stringify({ reqType, currElId, prevElId, nextElId });
+                    // console.log(returnedBody);
+                    // $.ajax({
+                    //     url: "./jsonpost.cgi",
+                    //     type: "POST",
+                    //     data: returnedBody,
+                    //     dataType: "json",
+                    //     success: function(response) {
+                    //         if (response == 1) {
+                    //             bootbox.alert('WaveMap Moved');
 
-                            } else {
-                                bootbox.alert('Error');
-                            }
-                        }
-                    });
+                    //         } else {
+                    //             bootbox.alert('Error');
+                    //         }
+                    //     }
+                    // });
                 } catch (e) {
                     console.log(e);
                 }

@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width,initial-scale=1">        
+        <title>ToneDexter</title> 
+        <link href='https://unpkg.com/boxicons@2.1.2/css/boxicons.min.css' rel='stylesheet'>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>    
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/bootbox.js/5.5.3/bootbox.min.js"></script>
+        <link href="https://use.fontawesome.com/releases/v5.3.1/css/all.css" rel="stylesheet" integrity="sha384-mzrmE5qonljUremFsqc01SB46JvROS7bZs3IO2EmfFsd15uHvIt+Y8vEf7N7fWAU" crossorigin="anonymous">
+        <link href="https://fonts.googleapis.com/css2?family=Roboto" rel="stylesheet"> 
+        <link href="css/bootstrap.min.css" rel="stylesheet" />
+        <script src="js/bootstrap.bundle.min.js"></script>
+        <script src="js/dselect.js"></script>    
+        <link rel="stylesheet" href="css/josh_styles.css">
+        <script src="js/searchtool.js"></script>   
+    </head>
+    <body> 
+        <nav>
+            <div class="navbar">
+                <i class='bx bx-menu'></i>
+                <div class="logo"><a href="index.html"><img src="images/AudioSprocketsLogoWhite.png"></a></div>
+                <div class="smalllogo"><a href="index.html"><img src="images/AudioSprocketsLogoWhite.png"></a></div>
+                <div class="nav-links">
+                    <div class="sidebar-logo">
+                        <span class="logo-name"><img src="images/AudioSprocketsLogoWhite.png"></span>
+                        <i class="bx bx-x"></i>
+                    </div>
+                    <!-- <ul class="links">
+                        <li><a href="/ssi.shtml">Menu1</a></li>                            
+                        <li><a href="/cgi.html">Menu2</a></li>
+                        <li><a href="/ssi_cgi.shtml">Menu3</a></li>
+
+                    </ul> -->
+            </div>
+        </nav>        
+
+        <div class="main-container">
+            <div class="row">
+                <div class="col-1">
+                    <div class="info-box">
+                        <h1>WaveMap <!--#wavemap--></h1>
+                        <div class="sliderwrapper">
+                            <div class = "slider">
+                                <div class="knob"></div>
+                                 
+                            </div>
+                            <div class="valuebox" id="screen-log">0</div>                  
+                        </div>
+                        
+                        
+                        <div class="wavemapDiv" id="wavemapDiv">Loading...</div>
+                    </div>
+                 
+                </div>
+                <div class="col-2">
+                    <img src="https://h4o15b.a2cdn1.secureserver.net/wp-content/uploads/2022/12/ToneDexter_II_VAbove_1000.jpg" class="big-logo">
+                    <div class="color-box"></div>
+                </div>
+            </div>
+ 
+            <div class="footer">
+                <p>Copyright 2023 © Audio Sprockets</p>
+            </div>
+        </div>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.10.2/Sortable.min.js"></script>
+        <script>
+            //let refreshBtn = document.getElementById("refresh-btn");
+            function delay(milliseconds){
+                return new Promise(resolve => {
+                    setTimeout(resolve, milliseconds);
+                });
+            }
+
+            const wrapper = document.getElementById("wavemapDiv");
+            const params = [];
+            window.onload = async () => {
+            try {
+                // fetch all data of todo
+                await delay(1000);
+                for (let i = 0; i < 1; i++) {
+                    await fetch('./param.json')
+                    .then(async (allData) => {
+                        //console.log(allData);
+                        return await allData.json();
+                    })
+                    .then((paramData) => {
+
+                        params.push(paramData);
+                        console.log(params);
+                        lineitem = `
+                        
+                        `;
+                        // const paramEl = document.createElement("div");
+                        // paramEl.classList.add("sliderwrapper");
+                        // paramEl.dataset.id = i;
+                        // paramEl.dataset.min = paramData.min;
+                        // const slotNo = wavemap.slot;
+                        // const text = wavemap.title;
+                        // const empty = wavemap.empty;
+                        // console.log(paramData);
+                        // wrapper.innerHTML="";
+                        // let lineitem = '';
+                        // wavemapEl.innerHTML = lineitem;
+                        // wrapper.appendChild(wavemapEl);
+
+                    });                    
+                    
+                }
+
+            } catch (e) {
+                console.log(e);
+            }
+            };
+            const knob = document.querySelector('.knob');
+            const test = document.querySelector('.slidertest');
+            let screenLog = document.querySelector("#screen-log");
+            // document.addEventListener("mousemove", logKey);
+
+            // function logKey(e) {
+            // screenLog.innerText = `
+            //     Screen X/Y: ${e.screenX}, ${e.screenY}
+            //     Client X/Y: ${e.clientX}, ${e.clientY}`;
+            // }
+
+            function calculatedegree(e) {
+                //const boundingRect = e.getBoundingClientRect();
+                //console.log(boundingRect);
+                //const x1 = window.innerWidth/2;
+                const x1 = e.target.getBoundingClientRect().left + e.target.getBoundingClientRect().width/2
+                const y1 = e.target.getBoundingClientRect().top + e.target.getBoundingClientRect().height/2
+                const x2 = e.clientX;
+                const y2 = e.clientY;
+                //console.log(x1, y1, x2, y2);
+                const deltax = x2 - x1;
+                const deltay = y2 - y1;
+                //console.log(deltax, deltay);
+                const rad = Math.atan2(deltay, deltax);
+
+                let deg = rad * (180 / Math.PI);
+
+                return deg;
+            }
+
+            knob.addEventListener("mousedown", function() {
+                
+                knob.addEventListener("mousemove", rotate);
+                    
+                    function rotate(e) {
+                        //console.log(e.target.parentNode.parentNode.getBoundingClientRect());
+                        
+                        let result = Math.floor(calculatedegree(e) + 90);
+                        if (result > 180) { result -= 360; }
+                        if (Math.abs(result) <= 150) {
+                            knob.style.transform = `rotate(${result}deg)`;
+                            const paramVal = Math.floor((result + 150)/300*100);
+                            screenLog.innerText = paramVal;
+                        }
+                        screenLog.style.display = "block";
+
+                    }
+                    knob.addEventListener("mouseup", function() {
+                        knob.removeEventListener("mousemove", rotate);
+                        screenLog.style.display = "none";
+                    });
+            });
+
+        </script>
+    </body>
+</html>
